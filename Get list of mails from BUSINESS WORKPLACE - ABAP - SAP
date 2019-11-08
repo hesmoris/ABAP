@@ -1,0 +1,38 @@
+**********************************************************************
+* FORM    :  send_notification
+*********************************************************************
+FORM send_notification .
+  DATA: wa_maildata TYPE sodocchgi1,
+              it_reclist TYPE TABLE OF somlreci1,
+              wa_reclist TYPE  somlreci1.
+  wa_maildata-obj_name = 'TESTOBJ'.
+  wa_maildata-obj_descr = text-030.
+  wa_maildata-sensitivty = 'P'.
+  wa_reclist-receiver = 'ZNR_I0001'.
+  wa_reclist-rec_type = 'C'.
+  APPEND wa_reclist TO it_reclist.
+  CLEAR wa_reclist.
+  wa_mailtxt =  'Do not reply to this system generated email'(032).
+  append wa_mailtxt to it_mailtxt.
+  CALL FUNCTION 'SO_NEW_DOCUMENT_SEND_API1'
+    EXPORTING
+      document_data              = wa_maildata
+      document_type              = 'RAW'
+      put_in_outbox              = 'X'
+      commit_work                = 'X'
+    TABLES
+      object_content             = it_mailtxt
+      receivers                  = it_reclist
+    EXCEPTIONS
+      too_many_receivers         = 1
+      document_not_sent          = 2
+      document_type_not_exist    = 3
+      operation_no_authorization = 4
+      parameter_error            = 5
+      x_error                    = 6
+      enqueue_error              = 7
+      OTHERS                     = 8.
+  IF sy-subrc <> 0.
+    sy-subrc = 0.
+  ENDIF.
+ENDFORM. "send_notification
